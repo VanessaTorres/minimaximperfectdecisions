@@ -7,6 +7,12 @@ from objects import Min,Max,Grass,Apples,Flower,ValidMovement
 
 pygame.init()
 
+'''
+Christian Escobar Florez - 1910235
+Jhon Henry Carabali
+Jhon Alejandro Cordona 
+Vanessa Quintero Torres
+'''
 
 # defining colors
 WHITE = (200,200,200)
@@ -14,6 +20,7 @@ WHITE = (200,200,200)
 
 
 screen = pygame.display.set_mode([500,700])
+#DIMENSION = 8
 clock = pygame.time.Clock()
 
 puntuacion = {
@@ -79,7 +86,6 @@ def can_move(x,y,direction):
                 y_right_2 = y - 1
                 if ( x_right == position[0] and (position[1] == y_right_1 or position[1] == y_right_2)):
                     position_right.append(position)
-
             elif direction == "left": # x disminuye 2 & Y disminuye o aumenta en 1
                 #self.rect.x -= 62
                 x_left = x - 2
@@ -97,6 +103,67 @@ def can_move(x,y,direction):
     elif direction == "left":
         return position_left
     #return False
+
+def can_move_click(player, pos_click):
+    #print("can_move_click")
+    movements = validmovements(player.x, player.y)
+    #print("Movimientos posibles")
+    #print(movements)
+    valid_position = []
+    address = ["down", "up", "right", "left"]
+    #print("Posición del jugador")
+    #print("Posición X"+str(player.x)+" "+"Posición Y"+str(player.y))
+
+    #print("Posición click")
+    #print("Posición X" + str(pos_click[0]//62) + " " + "Posición Y" + str(pos_click[1]//62))
+
+    for position in movements:
+        if isvalid_move(position[0], position[1]):
+            for direction in address:
+                if direction == "down": # Y aumenta 2  & X disminuye o aumenta en 1
+                    y_down = player.y + 2
+                    x_down_1 = player.x + 1
+                    x_down_2 = player.x - 1
+
+                    if( (position[0] == x_down_1 or position[0] == x_down_2) and  y_down == position[1]):
+
+                        if(position[0] == pos_click[0]//62 and position[1] == pos_click[1]//62):
+                            valid_position.append(position)
+                            valid_position.append("down")
+                            return valid_position
+
+                elif direction == "up": # Y disminuye 2 & X disminuye o aumenta en 1
+                    y_up = player.y - 2
+                    x_up_1 = player.x + 1
+                    x_up_2 = player.x - 1
+                    if ((position[0] == x_up_1 or position[0] == x_up_2) and y_up == position[1]):
+                        if (position[0] == pos_click[0]//62 and position[1] == pos_click[1]//62):
+                            valid_position.append(position)
+                            valid_position.append("up")
+                            return valid_position
+
+                elif direction == "right": # x aumenta 2 & Y disminuye o aumenta en 1
+                    x_right = player.x + 2
+                    y_right_1 = player.y + 1
+                    y_right_2 = player.y - 1
+                    if ( x_right == position[0] and (position[1] == y_right_1 or position[1] == y_right_2)):
+                        if (position[0] == pos_click[0]//62 and position[1] == pos_click[1]//62):
+                            valid_position.append(position)
+                            valid_position.append("right")
+                            return valid_position
+
+                elif direction == "left": # x disminuye 2 & Y disminuye o aumenta en 1
+                    #self.rect.x -= 62
+                    x_left = player.x - 2
+                    y_left_1 = player.y + 1
+                    y_left_2 = player.y - 1
+                    if (x_left == position[0] and (position[1] == y_left_1 or position[1] == y_left_2)):
+                        if (position[0] == pos_click[0]//62 and position[1] == pos_click[1]//62):
+                            valid_position.append(position)
+                            valid_position.append("left")
+                            return valid_position
+
+    return valid_position
 
 board = generate_board()
 
@@ -209,92 +276,41 @@ while 1:
 
     ##print(player_Max.rect.x//62, player_Max.rect.y//62)
     for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            sys.exit()
-        elif event.type == pygame.KEYDOWN:
+
+        # handle MOUSEBUTTONUP
+        if event.type == pygame.MOUSEBUTTONUP:
             print("Capturo el evento")
+            pos = pygame.mouse.get_pos()
+            click_x = pos[0]//62
+            click_y = pos[1]//62
+            pos_click = [pos[0], pos[1]]
+            print("Posición tablero : X->"+str(pos[0]//62)+" Y->"+str(pos[1]//62))
+
             player = players[0]
 
             current_x = player.x
             current_y = player.y
 
-            if event.key == pygame.K_DOWN: #aumenta en Y
-               movements = can_move(player.x,player.y,"down")
-               print("Posición"+str(player.x)+" "+str(player.y))
-               print(movements)
+            movements = can_move_click(player, pos_click)
+            print([n for n in movements])
+            print("Movimientos posibles")
+            direction = movements.pop()
+            print([n for n in movements])
+            available_movement = []
 
-               if(len(movements)>0):
+            if direction == "down":  # aumenta en Y
 
-                   for items in movements:
-                       if((players[0].x != items[0] and players[0].y != items[1]) and (players[1].x != items[0] and players[1].y != items[1])):
-                            available_movement = items
-
-                   if (len(available_movement) > 0):
-                       if (current_y > available_movement[1]):
-                           diferencia = current_y - available_movement[1]
-                           for i in range(diferencia):
-                               #time.sleep(2)
-                               player.rect.y -= 62
-                               collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
-                               if collided_object != None:
-                                   puntos = puntuacion[type(collided_object).__name__]
-                                   player.score += puntos
-                                   collided_object.kill()
-                                   objects_remaining -= 1
-
-                       if (current_y < available_movement[1]):
-                           diferencia = available_movement[1] - current_y
-                           for i in range(diferencia):
-                               #time.sleep(2)
-                               player.rect.y += 62
-                               collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
-                               if collided_object != None:
-                                   puntos = puntuacion[type(collided_object).__name__]
-                                   player.score += puntos
-                                   collided_object.kill()
-                                   objects_remaining -= 1
-
-                       time.sleep(1)
-
-                       if (current_x > available_movement[0]):
-                           diferencia = current_x - available_movement[0]
-                           for i in range(diferencia):
-                               #time.sleep(2)
-                               player.rect.x -= 62
-                               collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
-                               if collided_object != None:
-                                   puntos = puntuacion[type(collided_object).__name__]
-                                   player.score += puntos
-                                   collided_object.kill()
-                                   objects_remaining -= 1
-
-                       if (current_x < available_movement[0]):
-                           diferencia = available_movement[0] - current_x
-                           for i in range(diferencia):
-                               #time.sleep(2)
-                               player.rect.x += 62
-                               collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
-                               if collided_object != None:
-                                   puntos = puntuacion[type(collided_object).__name__]
-                                   player.score += puntos
-                                   collided_object.kill()
-                                   objects_remaining -= 1
-
-                       player.x = available_movement[0]
-                       player.y = available_movement[1]
-
-            elif event.key == pygame.K_UP:
-                movements = can_move(player.x, player.y, "up")
-                print("Posición" + str(player.x) + " " + str(player.y))
-                print(movements)
                 if (len(movements) > 0):
+                    print("Entro down")
+                    #Verifica que los caballos no se colisionen
 
                     for items in movements:
-                        if ((players[0].x != items[0] and players[0].y != items[1]) and (
-                                players[1].x != items[0] and players[1].y != items[1])):
-                            available_movement = items
+                        if ((players[0].x, players[0].y) != items ) and ( (players[1].x, players[1].y) != items ):
+                                available_movement = items
 
-                    if(len(available_movement) > 0):
+                    print("Movimientos que no estan dentro de los caballos")
+                    print(available_movement)
+                    if (len(available_movement) > 0):
                         if (current_y > available_movement[1]):
                             diferencia = current_y - available_movement[1]
                             for i in range(diferencia):
@@ -348,18 +364,77 @@ while 1:
                         player.x = available_movement[0]
                         player.y = available_movement[1]
 
-            elif event.key == pygame.K_LEFT:
-                movements = can_move(player.x, player.y, "left")
-                print("Posición" + str(player.x) + " " + str(player.y))
-                print(movements)
+            elif direction == "up": #y disminuye
+
                 if (len(movements) > 0):
 
                     for items in movements:
-                        if ((players[0].x != items[0] and players[0].y != items[1]) and (
-                                players[1].x != items[0] and players[1].y != items[1])):
-                            available_movement = items
+                        if ((players[0].x, players[0].y) != items ) and ( (players[1].x, players[1].y) != items ):
+                                available_movement = items
 
-                    if(len(available_movement)>0):
+                    if (len(available_movement) > 0):
+                        if (current_y > available_movement[1]):
+                            diferencia = current_y - available_movement[1]
+                            for i in range(diferencia):
+                                # time.sleep(2)
+                                player.rect.y -= 62
+                                collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
+                                if collided_object != None:
+                                    puntos = puntuacion[type(collided_object).__name__]
+                                    player.score += puntos
+                                    collided_object.kill()
+                                    objects_remaining -= 1
+
+                        if (current_y < available_movement[1]):
+                            diferencia = available_movement[1] - current_y
+                            for i in range(diferencia):
+                                # time.sleep(2)
+                                player.rect.y += 62
+                                collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
+                                if collided_object != None:
+                                    puntos = puntuacion[type(collided_object).__name__]
+                                    player.score += puntos
+                                    collided_object.kill()
+                                    objects_remaining -= 1
+
+                        time.sleep(1)
+
+                        if (current_x > available_movement[0]):
+                            diferencia = current_x - available_movement[0]
+                            for i in range(diferencia):
+                                # time.sleep(2)
+                                player.rect.x -= 62
+                                collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
+                                if collided_object != None:
+                                    puntos = puntuacion[type(collided_object).__name__]
+                                    player.score += puntos
+                                    collided_object.kill()
+                                    objects_remaining -= 1
+
+                        if (current_x < available_movement[0]):
+                            diferencia = available_movement[0] - current_x
+                            for i in range(diferencia):
+                                # time.sleep(2)
+                                player.rect.x += 62
+                                collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
+                                if collided_object != None:
+                                    puntos = puntuacion[type(collided_object).__name__]
+                                    player.score += puntos
+                                    collided_object.kill()
+                                    objects_remaining -= 1
+
+                        player.x = available_movement[0]
+                        player.y = available_movement[1]
+
+            elif direction == "left": #x disminuye
+
+                if (len(movements) > 0):
+
+                    for items in movements:
+                        if ((players[0].x, players[0].y) != items ) and ( (players[1].x, players[1].y) != items ):
+                                available_movement = items
+
+                    if (len(available_movement) > 0):
                         if (current_x > available_movement[0]):
                             diferencia = current_x - available_movement[0]
                             for i in range(diferencia):
@@ -410,17 +485,15 @@ while 1:
                         player.x = available_movement[0]
                         player.y = available_movement[1]
 
-            elif event.key == pygame.K_RIGHT:
-                movements = can_move(player.x, player.y, "right")
-                print("Posición" + str(player.x) + " " + str(player.y))
-                print(movements)
-                if (len(movements) > 0):
-                    for items in movements:
-                        if ((players[0].x != items[0] and players[0].y != items[1]) and (
-                                players[1].x != items[0] and players[1].y != items[1])):
-                            available_movement = items
+            elif direction == "right": #x aumenta
 
-                    if(len(available_movement)>0):
+                if (len(movements) > 0):
+
+                    for items in movements:
+                        if ((players[0].x, players[0].y) != items ) and ( (players[1].x, players[1].y) != items ):
+                                available_movement = items
+
+                    if (len(available_movement) > 0):
                         if (current_x > available_movement[0]):
                             diferencia = current_x - available_movement[0]
                             for i in range(diferencia):
@@ -470,9 +543,75 @@ while 1:
 
                         player.x = available_movement[0]
                         player.y = available_movement[1]
+
+            """if(len(movements) > 0):
+
+                for items in movements:
+                    if ((players[0].x != items[0] and players[0].y != items[1]) and (players[1].x != items[0] and players[1].y != items[1])):
+                        available_movement = items
+
+                    if (len(available_movement) > 0):
+
+                        if (current_x > available_movement[0]):
+                            diferencia = current_x - available_movement[0]
+                            for i in range(diferencia):
+                                # time.sleep(2)
+                                player.rect.x -= 62
+                                collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
+                                if collided_object != None:
+                                    puntos = puntuacion[type(collided_object).__name__]
+                                    player.score += puntos
+                                    collided_object.kill()
+                                    objects_remaining -= 1
+
+                        if (current_y > available_movement[1]):
+                            diferencia = current_y - available_movement[1]
+                            for i in range(diferencia):
+                                # time.sleep(2)
+                                player.rect.y -= 62
+                                collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
+                                if collided_object != None:
+                                    puntos = puntuacion[type(collided_object).__name__]
+                                    player.score += puntos
+                                    collided_object.kill()
+                                    objects_remaining -= 1
+
+                        if (current_x < available_movement[0]):
+                            diferencia = available_movement[0] - current_x
+                            for i in range(diferencia):
+                                # time.sleep(2)
+                                player.rect.x += 62
+                                collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
+                                if collided_object != None:
+                                    puntos = puntuacion[type(collided_object).__name__]
+                                    player.score += puntos
+                                    collided_object.kill()
+                                    objects_remaining -= 1
+
+                        if (current_y < available_movement[1]):
+                            diferencia = available_movement[1] - current_y
+                            for i in range(diferencia):
+                                # time.sleep(2)
+                                player.rect.y += 62
+                                collided_object = pygame.sprite.spritecollideany(player, objects_sprites)
+                                if collided_object != None:
+                                    puntos = puntuacion[type(collided_object).__name__]
+                                    player.score += puntos
+                                    collided_object.kill()
+                                    objects_remaining -= 1
+
+                        player.x = available_movement[0]
+                        player.y = available_movement[1]"""
 
             elemt = players.pop(0)
             players.append(elemt)
+
+            print("Objetos disponibles")
+            print(objects_remaining)
+
+        if event.type == pygame.QUIT:
+            sys.exit()
+
 
 
     pygame.display.update()
